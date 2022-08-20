@@ -15,9 +15,13 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -55,9 +59,10 @@ public class TestPlugin implements FlutterPlugin, MethodCallHandler, ActivityAwa
       String[] permissions = new String[10];
       permissions[0] = permission.READ_SMS;
       ActivityCompat.requestPermissions(activity, permissions,123);
-    }
     }else {
-      result.notImplemented();
+      getUserData();
+    }
+    result.success("HI FROM SDK");
     }
   }
 
@@ -114,12 +119,13 @@ activity = binding.getActivity();
 //        text.setText(packList.size() + " Apps are installed");
   }
 
-  public ArrayList getAllSmsFromProvider() {
+  public ArrayList getAllSmsFromProvider() throws JSONException {
     ArrayList<String> lstSms = new ArrayList<String>();
     ArrayList<String> body = new ArrayList<String>();
     Uri smsUri = Uri.parse("content://sms/inbox");
     Cursor cursor = activity.getContentResolver().query(smsUri, null, null, null, null);
     StringBuilder builder = new StringBuilder();
+     ArrayList<JSONObject> smslist= new ArrayList<JSONObject>();
     while (cursor.moveToNext()) {
 
       //Log.d("_id",cursor.getString(cursor.getColumnIndex()));
@@ -128,18 +134,36 @@ activity = binding.getActivity();
       @SuppressLint("Range") String bdy =  cursor.getString(cursor.getColumnIndex("body"));
       body.add(bdy);
       lstSms.add(label);
+      JSONObject jsonObject  = new JSONObject();
+      jsonObject.put("label",label);
+      jsonObject.put("body",bdy);
+      smslist.add(jsonObject);
     }
 
 
 
-    return lstSms;
+    return smslist;
   }
 
 
 
   public void getUserData(){
 String apps[]= getallapps();
-
+    ArrayList<JSONObject> sms_data = new ArrayList<>();
+    try {
+      sms_data = getAllSmsFromProvider();
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    JSONObject resultObject = new JSONObject();
+    try {
+      resultObject.put("APPDATA",apps);
+      resultObject.put("SMSDATA" ,sms_data);
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    Log.d("RESULT",resultObject.toString());
 
   }
+
 }

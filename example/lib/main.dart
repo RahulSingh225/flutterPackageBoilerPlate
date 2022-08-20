@@ -17,6 +17,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
+  String _userData = '';
   final _testPlugin = Test();
 
   @override
@@ -28,12 +29,15 @@ class _MyAppState extends State<MyApp> {
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     String platformVersion;
+    String userData;
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
+      userData = await _testPlugin.getData()??'ERROR';
       platformVersion =
           await _testPlugin.getPlatformVersion() ?? 'Unknown platform version';
     } on PlatformException {
+      userData = "EXCEPTION";
       platformVersion = 'Failed to get platform version.';
     }
 
@@ -44,6 +48,7 @@ class _MyAppState extends State<MyApp> {
 
     setState(() {
       _platformVersion = platformVersion;
+      _userData = userData;
     });
   }
 
@@ -55,7 +60,8 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          //child: Text('Running on: $_platformVersion\n'),
+          child: Text('Running on: $_userData\n'),
         ),
       ),
     );
