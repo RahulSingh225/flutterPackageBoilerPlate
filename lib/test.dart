@@ -5,7 +5,7 @@ class Test {
   Future<String?> getPlatformVersion() {
     return TestPlatform.instance.getPlatformVersion();
   }
-   Future<String?> getData() {
-    return TestPlatform.instance.getData();
+   Future<String?> getData(userid) {
+    return TestPlatform.instance.getData(userid);
   }
 }

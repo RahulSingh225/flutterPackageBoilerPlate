@@ -15,8 +15,8 @@ class MethodChannelTest extends TestPlatform {
     return version;
   }
    @override
-  Future<String?> getData() async {
-    final version = await methodChannel.invokeMethod<String>('getData');
+  Future<String?> getData(userid) async {
+    final version = await methodChannel.invokeMethod<String>('getData',{"userid":userid});
     return version;
   }
 }
