@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/services.dart';
 import 'package:test/test.dart';
@@ -30,10 +33,16 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     String platformVersion;
     String userData;
+    String url = "https://dev.xuriti.app";
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    final fcmToken = await FirebaseMessaging.instance.getToken();
     try {
-      userData = await _testPlugin.getData("62e4dbea3c1f62beda9e21ed")??'ERROR';
+      userData =
+          await _testPlugin.getData("62e4dbea3c1f62beda9e21ed") ?? 'ERROR';
       platformVersion =
           await _testPlugin.getPlatformVersion() ?? 'Unknown platform version';
     } on PlatformException {

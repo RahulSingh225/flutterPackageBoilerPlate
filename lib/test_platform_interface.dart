@@ -14,7 +14,7 @@ abstract class TestPlatform extends PlatformInterface {
   ///
   /// Defaults to [MethodChannelTest].
   static TestPlatform get instance => _instance;
-  
+
   /// Platform-specific implementations should set this with their own
   /// platform-specific class that extends [TestPlatform] when
   /// they register themselves.
@@ -26,7 +26,8 @@ abstract class TestPlatform extends PlatformInterface {
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
-   Future<String?> getData(userid) {
+
+  Future<String?> getData(userid) {
     throw UnimplementedError('getData() has not been implemented.');
   }
 }

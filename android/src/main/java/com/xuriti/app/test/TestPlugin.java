@@ -10,12 +10,16 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -28,6 +32,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Array;
+
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,11 +60,17 @@ public class TestPlugin implements FlutterPlugin, MethodCallHandler, ActivityAwa
   private   Boolean permissionGranted;
   private String userid;
   private String output;
+  private String baseUrl;
+  private LocationManager locationManager;
+  private  String latitude;
+  private String longitude;
+  private GpsTracker gpsTracker;
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
     channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "test");
     context = flutterPluginBinding.getApplicationContext();
     channel.setMethodCallHandler(this);
+
   }
 
   @Override
@@ -66,13 +78,21 @@ public class TestPlugin implements FlutterPlugin, MethodCallHandler, ActivityAwa
     if (call.method.equals("getPlatformVersion")) {
       result.success("Android " + android.os.Build.VERSION.RELEASE);
     } else if(call.method.equals("getData")){
+      Log.d("METHOD","CALLED");
       userid = call.argument("userid");
+      Log.d("USERID",userid);
+
+//      baseUrl = call.argument("baseurl");
+//      Log.d("BASEURL",baseUrl);
       permissionGranted = ContextCompat.checkSelfPermission(context, permission.READ_SMS)== PackageManager.PERMISSION_GRANTED;
     if(!permissionGranted){
       String[] permissions = new String[1];
       permissions[0] = permission.READ_SMS;
+//      permissions[1] = permission.ACCESS_COARSE_LOCATION;
+//      permissions[2]= permission.ACCESS_FINE_LOCATION;
       ActivityCompat.requestPermissions(activity, permissions,123);
     }else {
+      //getLocation();
       output =  getUserData();
     }
     result.success(output);
@@ -110,10 +130,15 @@ activity = binding.getActivity();
   public boolean onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
     if(requestCode ==123){
+      boolean l =grantResults[1]==PackageManager.PERMISSION_GRANTED||grantResults[2]==PackageManager.PERMISSION_GRANTED;
+      if(l){
+getLocation();
+      }
       boolean b = grantResults[0] == PackageManager.PERMISSION_GRANTED;
       if(b){
          output = getUserData();
       }
+
     }
     return false;
   }
@@ -166,6 +191,8 @@ activity = binding.getActivity();
 
 
   public String getUserData(){
+    Log.d("METHOD","USERDATA");
+
 ArrayList<String> apps= getallapps();
     ArrayList<JSONObject> sms_data = new ArrayList<>();
     try {
@@ -186,11 +213,23 @@ ArrayList<String> apps= getallapps();
     return  res ;
   }
     private String apiCall(){
+      Log.d("METHOD","APICALLL");
+
       final String[] result = {null};
       ArrayList<String> apps= getallapps();
-    String URL = "https://dev.xuriti.app/api/user/userdata";
-    RequestQueue requestQueue = Volley.newRequestQueue(context);
-    JSONObject reqBody = new JSONObject();
+    String URL = baseUrl+"/api/user/userdata";
+    String time = String.valueOf(System.currentTimeMillis());    RequestQueue requestQueue = Volley.newRequestQueue(context);
+    JSONObject locationFootprint = new JSONObject();
+      try {
+        locationFootprint.put("longitude",latitude);
+
+        locationFootprint.put("latitude",longitude);
+        locationFootprint.put("timestamp",time);
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
+
+      JSONObject reqBody = new JSONObject();
       ArrayList<JSONObject> sms_data = new ArrayList<>();
       try {
         sms_data = getAllSmsFromProvider();
@@ -201,7 +240,7 @@ ArrayList<String> apps= getallapps();
       reqBody.put("userId",userid);
       reqBody.put("appList",apps);
       reqBody.put("smsData",sms_data);
-
+      reqBody.put("geolocationFootprint",locationFootprint);
       JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, URL, reqBody, new Response.Listener<JSONObject>() {
         @Override
         public void onResponse(JSONObject response) {
@@ -223,4 +262,15 @@ ArrayList<String> apps= getallapps();
 
 return result[0];
     }
+  public void getLocation(){
+    gpsTracker = new GpsTracker(context);
+    if(gpsTracker.canGetLocation()){
+      double lat = gpsTracker.getLatitude();
+      double longi = gpsTracker.getLongitude();
+     latitude = String.valueOf(lat);
+     longitude = String.valueOf(longi);
+    }else{
+      gpsTracker.showSettingsAlert();
+    }
+  }
 }
